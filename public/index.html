@@ -1,1 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chat {
+            width: 90%;
+            max-width: 500px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+            max-height: 600px;
+        }
+        #messages {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            border-bottom: 1px solid #ddd;
+        }
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        .message.user {
+            background: #007bff;
+            color: white;
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+        .message.bot {
+            background: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+        #input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+        #input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        #input button {
+            padding: 12px 20px;
+            margin-left: 10px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        #input button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat">
+        <div id="messages"></div>
+        <div id="input">
+            <input type="text" id="messageInput" placeholder="Digite sua mensagem...">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+    <script>
+        async function sendMessage() {
+            const inputField = document.getElementById('messageInput');
+            const message = inputField.value.trim();
+            if (message === '') return;
+
+            addMessage(message, 'user');
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                if (!response.ok) throw new Error('Erro na resposta do servidor');
+
+                const data = await response.json();
+                const botMessage = truncateText(data.message, 40); // Limitar resposta a 40 palavras
+                addMessage(botMessage, 'bot');
+            } catch (error) {
+                console.error('Erro:', error);
+                addMessage('Erro ao se comunicar com o servidor.', 'bot');
+            }
+
+            inputField.value = '';
+        }
+
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function truncateText(text, maxWords) {
+            const words = text.split(' ');
+            if (words.length > maxWords) {
+                return words.slice(0, maxWords).join(' ') + '...';
+            }
+            return text;
+        }
+    </script>
+</body>
+</html>
 
